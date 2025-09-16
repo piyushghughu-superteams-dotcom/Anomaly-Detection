@@ -1,4 +1,4 @@
-# Real-Time E-commerce Anomaly Detection System 🚀
+# Real-Time Fraud & Anomaly Detection Platform 🛡️
 
 A powerful backend application built with **FastAPI** and **MySQL** to monitor e-commerce transactions in real-time. This system leverages a **Large Language Model (LLM)** to detect and report on various anomalies, providing clear, human-readable insights through a live, auto-updating dashboard.
 
