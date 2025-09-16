@@ -92,14 +92,11 @@ AI_API_KEY="gsk_YourSecretKeyGoesHere"
 
 ## ▶️ Running the Application
 
-### **1. Start the FastAPI Server**
+### **Start the FastAPI Server**
 Run the following command in your terminal from the project's root directory.
 ```bash
 uvicorn main:app --reload
 ```
-
-### **2. View the Live Dashboard**
-Open the `index.html` file in your web browser. The dashboard will automatically connect to the server and start displaying live data.
 
 ---
 
