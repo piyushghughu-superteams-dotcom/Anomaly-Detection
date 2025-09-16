@@ -2,8 +2,6 @@
 
 A powerful backend application built with **FastAPI** and **MySQL** to monitor e-commerce transactions in real-time. This system leverages a **Large Language Model (LLM)** to detect and report on various anomalies, providing clear, human-readable insights through a live, auto-updating dashboard.
 
-
-
 ---
 
 ## 📋 Table of Contents
@@ -40,15 +38,19 @@ This system is designed to detect four critical types of anomalies:
 
 ## 🔧 Setup and Installation
 
-Follow these steps to get the project running on your local machine.
+Follow these steps in order to get the project running on your local machine.
 
-### **1. Clone the Repository**
+### **Step 1: Prerequisites**
+- Python 3.10+
+- MySQL Server
+
+### **Step 2: Clone the Repository**
 ```bash
 git clone <your-repository-url>
 cd <your-repository-name>
 ```
 
-### **2. Create and Activate a Virtual Environment**
+### **Step 3: Create and Activate a Virtual Environment**
 
 * **For Linux/macOS:**
     ```bash
@@ -61,20 +63,13 @@ cd <your-repository-name>
     .\venv\Scripts\activate
     ```
 
-### **3. Install Dependencies**
+### **Step 4: Install Dependencies**
 Install all the required Python packages from the `requirements.txt` file.
 ```bash
 pip install -r requirements.txt
 ```
 
-### **4. Set Up the Database**
-Make sure your MySQL server is running and create a new database for the project.
-```sql
-CREATE DATABASE anology_superteams;
-```
-After creating the database, import the schema and any initial data from the provided `.sql` files.
-
-### **5. Configure Environment Variables**
+### **Step 5: Configure Environment Variables**
 Create a file named `.env` in the root of the project folder and add your credentials.
 
 **`.env` file contents:**
@@ -88,15 +83,136 @@ MYSQL_DB=anology_superteams
 AI_API_KEY="gsk_YourSecretKeyGoesHere"
 ```
 
+### **Step 6: Set Up the Database**
+First, make sure your MySQL server is running. Then, run the provided SQL script to create all the necessary tables and insert sample data.
+
+<details>
+<summary>Click to view the complete `setup.sql` script</summary>
+
+```sql
+-- Create the database if it doesn't already exist
+CREATE DATABASE IF NOT EXISTS anology_superteams;
+
+-- Switch to the new database
+USE anology_superteams;
+
+-- =============================================
+-- STEP 1: CREATE THE TABLES
+-- =============================================
+
+-- Table: customers
+-- Stores information about each unique customer.
+CREATE TABLE IF NOT EXISTS `customers` (
+  `customer_id` bigint NOT NULL AUTO_INCREMENT,
+  `customer_name` varchar(255) NOT NULL,
+  `mobile_number` varchar(20) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `state` varchar(100) DEFAULT NULL,
+  `pincode` varchar(20) DEFAULT NULL,
+  `country` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`customer_id`),
+  UNIQUE KEY `mobile_number` (`mobile_number`)
+);
+
+-- Table: products
+-- Stores the product catalog with their standard prices.
+CREATE TABLE IF NOT EXISTS `products` (
+  `product_id` varchar(20) NOT NULL,
+  `product_name` varchar(255) NOT NULL,
+  `product_price` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`product_id`)
+);
+
+-- Table: transactions
+-- The main table that records every transaction event.
+CREATE TABLE IF NOT EXISTS `transactions` (
+  `transaction_id` bigint NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint NOT NULL,
+  `transaction_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `status` enum('SUCCESS','FAILED') DEFAULT 'SUCCESS',
+  `total_amount` decimal(10,2) DEFAULT '0.00',
+  PRIMARY KEY (`transaction_id`),
+  KEY `customer_id` (`customer_id`),
+  CONSTRAINT `transactions_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`)
+);
+
+-- Table: transaction_items
+-- A child table that lists the specific products included in each transaction.
+CREATE TABLE IF NOT EXISTS `transaction_items` (
+  `item_id` bigint NOT NULL AUTO_INCREMENT,
+  `transaction_id` bigint NOT NULL,
+  `product_id` varchar(20) NOT NULL,
+  `product_name` varchar(255) DEFAULT NULL,
+  `product_price` decimal(10,2) DEFAULT NULL,
+  `quantity` int DEFAULT '1',
+  PRIMARY KEY (`item_id`),
+  KEY `transaction_id` (`transaction_id`),
+  KEY `product_id` (`product_id`),
+  CONSTRAINT `transaction_items_ibfk_1` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`transaction_id`),
+  CONSTRAINT `transaction_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`)
+);
+
+
+-- =============================================
+-- STEP 2: INSERT SAMPLE DATA
+-- =============================================
+
+-- Insert data into customers table
+INSERT INTO `customers` (`customer_id`, `customer_name`, `mobile_number`, `email`, `city`, `state`, `pincode`, `country`) VALUES
+(1, 'Alice Johnson', '9876543210', 'alice.j@example.com', 'Mumbai', 'Maharashtra', '400001', 'India'),
+(2, 'Bob Smith', '9876543211', 'bob.s@example.com', 'Delhi', 'Delhi', '110001', 'India'),
+(3, 'Charlie Brown', '9876543212', 'charlie.b@example.com', 'Bangalore', 'Karnataka', '560001', 'India'),
+(4, 'David Williams', '9876543213', 'david.w@example.com', 'Kolkata', 'West Bengal', '700001', 'India');
+
+-- Insert data into products table
+INSERT INTO `products` (`product_id`, `product_name`, `product_price`) VALUES
+('prod1001', 'Laptop', 50000.00),
+('prod1002', 'Smartphone', 20000.00),
+('prod1003', 'Headphones', 2000.00),
+('prod1004', 'Keyboard', 1000.00),
+('prod1005', 'Mouse', 500.00);
+
+-- Insert a successful single-item transaction for Alice Johnson
+INSERT INTO `transactions` (customer_id, status, total_amount) VALUES (1, 'SUCCESS', 50000.00);
+SET @last_txn_id = LAST_INSERT_ID();
+INSERT INTO `transaction_items` (transaction_id, product_id, product_name, product_price, quantity)
+VALUES (@last_txn_id, 'prod1001', 'Laptop', 50000.00, 1);
+
+-- Insert a successful multi-item transaction for Bob Smith
+INSERT INTO `transactions` (customer_id, status, total_amount) VALUES (2, 'SUCCESS', 1500.00);
+SET @last_txn_id = LAST_INSERT_ID();
+INSERT INTO `transaction_items` (transaction_id, product_id, product_name, product_price, quantity)
+VALUES 
+  (@last_txn_id, 'prod1004', 'Keyboard', 1000.00, 1),
+  (@last_txn_id, 'prod1005', 'Mouse', 500.00, 1);
+
+-- Insert a failed transaction for Charlie Brown
+INSERT INTO `transactions` (customer_id, status, total_amount) VALUES (3, 'FAILED', 20000.00);
+SET @last_txn_id = LAST_INSERT_ID();
+INSERT INTO `transaction_items` (transaction_id, product_id, product_name, product_price, quantity)
+VALUES (@last_txn_id, 'prod1002', 'Smartphone', 20000.00, 1);
+
+SELECT 'Tables created and sample data inserted successfully.' AS status;
+```
+</details>
+
+To run the script, save it as `setup.sql` and use the MySQL command line:
+```bash
+mysql -u your_mysql_username -p < setup.sql
+```
+
 ---
 
 ## ▶️ Running the Application
 
-### **Start the FastAPI Server**
+### **1. Start the FastAPI Server**
 Run the following command in your terminal from the project's root directory.
 ```bash
 uvicorn main:app --reload
 ```
+### **2. View the Live Dashboard**
+Open the `index.html` file in your web browser. The dashboard will automatically connect to the server and start displaying live data.
 
 ---
 
