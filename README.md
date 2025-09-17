@@ -264,6 +264,8 @@ Customer Rachel Stone (ID: 18) made 6 transactions on September 16, 2025 at 16:4
 <details>
 <summary>Click to see sample output</summary>
 
+<p><strong>This blog was written in collaboration with <a href="https://www.superteams.ai">Superteams.ai</a></strong></p>
+
 ```text
 Transaction Failed: 2025-09-16 17:00:49 - Customer: Ian Clark (ID: 9) - Product: Monitor
 Transaction Failed: 2025-09-16 16:57:35 - Customer: Eva Green (ID: 5) - Product: Printer
